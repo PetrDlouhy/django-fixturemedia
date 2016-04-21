@@ -5,12 +5,12 @@ import os
 from shutil import copy
 
 from django.apps import apps
-from django.core.management.base import CommandError, NoArgsCommand
+from django.core.management.base import CommandError, BaseCommand
 
 from ._utils import file_patt, file_patt_prefixed
 
 
-class Command(NoArgsCommand):
+class Command(BaseCommand):
     """Management command to collect media files."""
 
     can_import_settings = True
@@ -19,7 +19,7 @@ class Command(NoArgsCommand):
                       dest='interactive',
                       default=True,
                       help='Do NOT prompt the user for input of any kind.')
-    option_list = NoArgsCommand.option_list + (opt, )
+    option_list = BaseCommand.option_list + (opt, )
 
     def handle_noargs(self, **options):
         """Handle command invocation."""
@@ -40,17 +40,16 @@ class Command(NoArgsCommand):
                                 settings.MEDIA_ROOT,
                                 options['verbosity'])
 
-    def handle_fixture(self, root, fixture, media_root, verbosity=0):
+    def handle_fixture(self, root, fixture, media_root):
         """Copy media files to MEDIA_ROOT."""
         file_paths = self.pattern.findall(open(fixture).read())
         if file_paths:
             for fp in file_paths:
                 fixture_path = os.path.join(root, 'media', fp)
                 if not os.path.exists(fixture_path):
-                    if int(verbosity) >= 1:
-                        msg = ('File path ({}) found in fixture '
-                               'but not on disk in ({}) \n')
-                        self.stderr.write(msg.format(fp, fixture_path))
+                    msg = ('File path ({}) found in fixture '
+                           'but not on disk in ({}) \n')
+                    self.stderr.write(msg.format(fp, fixture_path))
                     continue
                 final_dest = os.path.join(media_root, fp)
                 dest_dir = os.path.dirname(final_dest)
@@ -62,25 +61,14 @@ class Command(NoArgsCommand):
 
     def find_fixtures(self, fixture_dirs):
         """Find fixtures in installed applications."""
-        app_module_paths = []
-        for app in apps.get_app_configs():
-            if hasattr(app, '__path__'):
-                # It's a 'models/' sub-package
-                for path in app.__path__:
-                    app_module_paths.append(path)
-            else:
-                # It's a models.py module
-                app_module_paths.append(app.__file__)
-        pathl = lambda path: os.path.join(os.path.dirname(path), 'fixtures')
+        app_module_paths = [app.path for app in apps.get_app_configs()]
+        pathl = lambda path: os.path.join(path, 'fixtures')
         app_fixtures = [pathl(path) for path in app_module_paths]
         app_fixtures += list(fixture_dirs) + ['']
         fixtures = []
         for fixture_path in app_fixtures:
-            try:
-                root, _, files = os.walk(fixture_path).next()
+            for root, _, files in os.walk(fixture_path):
                 for file in files:
                     if file.rsplit('.', 1)[-1] in ('json', 'yaml'):
                         fixtures.append((root, os.path.join(root, file)))
-            except StopIteration:
-                pass
         return fixtures
