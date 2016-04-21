@@ -21,7 +21,7 @@ class Command(BaseCommand):
                       help='Do NOT prompt the user for input of any kind.')
     option_list = BaseCommand.option_list + (opt, )
 
-    def handle_noargs(self, **options):
+    def handle(self, **options):
         """Handle command invocation."""
         from django.conf import settings
         fixtures = self.find_fixtures(settings.FIXTURE_DIRS)
@@ -37,8 +37,7 @@ class Command(BaseCommand):
         for root, fixture in fixtures:
             self.handle_fixture(root,
                                 fixture,
-                                settings.MEDIA_ROOT,
-                                options['verbosity'])
+                                settings.MEDIA_ROOT)
 
     def handle_fixture(self, root, fixture, media_root):
         """Copy media files to MEDIA_ROOT."""
