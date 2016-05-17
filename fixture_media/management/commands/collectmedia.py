@@ -41,7 +41,9 @@ class Command(BaseCommand):
 
     def handle_fixture(self, root, fixture, media_root):
         """Copy media files to MEDIA_ROOT."""
-        file_paths = self.pattern.findall(open(fixture).read())
+        file_paths = []
+        for line in open(fixture).readlines():
+            file_paths.extend(self.pattern.findall(line))
         if file_paths:
             for fp in file_paths:
                 fixture_path = os.path.join(root, 'media', fp)
