@@ -14,12 +14,15 @@ class Command(BaseCommand):
     """Management command to collect media files."""
 
     can_import_settings = True
-    opt = make_option('--noinput',
-                      action='store_false',
-                      dest='interactive',
-                      default=True,
-                      help='Do NOT prompt the user for input of any kind.')
-    option_list = BaseCommand.option_list + (opt, )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--noinput',
+            action='store_false',
+            dest='interactive',
+            default=True,
+            help='Do NOT prompt the user for input of any kind.'
+        )
 
     def handle(self, **options):
         """Handle command invocation."""
