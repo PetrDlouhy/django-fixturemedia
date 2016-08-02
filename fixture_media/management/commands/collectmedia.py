@@ -1,6 +1,5 @@
 """Module of management command 'collectmedia'."""
 
-from optparse import make_option
 import os
 from shutil import copy
 
